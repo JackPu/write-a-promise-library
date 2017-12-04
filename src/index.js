@@ -9,24 +9,52 @@ function JPromise(fn) {
             handle(deferred);
         }
     }
+    function reject(reason) {
+        state = 'rejected';
+        value = reason;
+        if (deferred) {
+            handle(deferred);
+        }
+    }
     function handle(handler) {
-        if (!handler.onResolved) {
-            handler.resolve(value);
+        if (state === 'pending') {
+            deferred = handler;
             return;
         }
 
-        const ret = handler.onResolved(value);
-        handler.resolve(ret);
+        let handlerCallback;
+
+        if (state === 'resolved') {
+            handlerCallback = handler.onResolved;
+        } else {
+            handlerCallback = handler.onRejected;
+        }
+
+        if (!handlerCallback) {
+            if (state === 'resolved') {
+                handler.resolve(value);
+            } else {
+                handler.reject(value);
+            }
+            return;
+        }
+        setImmediate(() => {
+            const ret = handlerCallback(value);
+            handler.resolve(ret);
+        });
+
     }
-    this.then = function(onResolved) {
-        return new Promise((resolve) => {
+    this.then = function(onResolved, onRejected) {
+        return new Promise((resolve, rejected) => {
             handle({
                 onResolved,
+                onRejected,
                 resolve,
+                rejected
             });
         });
     };
-    fn(resolve);
+    fn(resolve, reject);
 }
 
 module.exports = JPromise;

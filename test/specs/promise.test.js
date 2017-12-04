@@ -11,7 +11,10 @@ describe('your own promise library unit tests', () => {
         expect(typeof p.then === 'function').to.equal(true);
     });
     it('excute a then function', () => {
-        p.then((val) => data = val);
-        expect(data).to.equal(5);
+        const a = new Promise(() => p.then((val) => data = val));
+        a.then(() => {
+            expect(data).to.equal(5);
+        });
+
     });
 });
