@@ -9,15 +9,22 @@ function JPromise(fn) {
             handle(deferred);
         }
     }
-    function handle(onResolved) {
-        if (state === 'pending') {
-            deferred = onResolved;
+    function handle(handler) {
+        if (!handler.onResolved) {
+            handler.resolve(value);
             return;
         }
-        onResolved(value);
+
+        const ret = handler.onResolved(value);
+        handler.resolve(ret);
     }
     this.then = function(onResolved) {
-        handle(onResolved);
+        return new Promise((resolve) => {
+            handle({
+                onResolved,
+                resolve,
+            });
+        });
     };
     fn(resolve);
 }
